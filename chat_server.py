@@ -1,7 +1,13 @@
-#******************************
+# ----------------------------------------------------------------------------------------------
+# Name: Kunal Rajpal
+# Student number: 7885301
+# Course: COMP 4300, Computer Network
+# Instructor: Dr. Sara Rouhani 
+# Assignment: Assignment 1, chat_server.py
+# 
+# Remarks: Server for our client-server application
 #
-#
-#******************************
+#-------------------------------------------------------------------------------------------------
 
 #Imports
 import json
@@ -9,29 +15,43 @@ import socket
 import threading 
 
 
-#Variables
+#Constants
 SERVER_HOST = "127.0.0.1" #Local host
-SERVER_PORT = 8080
+SERVER_PORT = 8080        #Any arbitrary port chosen
 
-MAXIMUM_CAPACITY = 5 #Max capacity of the chat rooms
+MAXIMUM_CAPACITY = 5      #Max capacity of the chat rooms
 
+#------------------------------------------------------
 # server set up
-#create a server connection
+#   
+# creating a TCP server connection 
+# binding it to local host with a tuple containing our host and port
+#------------------------------------------------------
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The first parameter indicates we are using internet socket and the second parameter indicates we are using TCP and not UDP
-server.bind((SERVER_HOST, SERVER_PORT))                     # bind it to our (local) host with a tuple containing our host and port
+server.bind((SERVER_HOST, SERVER_PORT))
 server.listen()                                             # listening mode
 
-print("Listening on %s:%d" % (SERVER_HOST, SERVER_PORT))
+print("Listening on %s:%d" % (SERVER_HOST, SERVER_PORT))    
 
-#Lists
+#Lists & Dictionaries
 list_of_clients = []        #list of clients connecting to the server
 client_nicknames = []       #list of client nicknames
-chat_rooms = {}             #list of all existing chart rooms
+chat_rooms = {}             #Dictionary of all existing chart rooms
+# our dict will have the name of the chat room as the key with its value being the list of peers in that chat room
 
 
 #Functions
 
-#Broadcast: A helper function to send messages to a particular list of clients
+
+#------------------------------------------------------
+# broadcast
+#
+# PURPOSE: A helper function to send messages to a particular list of clients
+#
+# INPUT PARAMETERS: Message to be sent
+#                   Clients that the message will be broadcasted to
+#                   broadcasting client
+#------------------------------------------------------
 def broadcast(message, targetClients, broadcaster):
     for targetClient in targetClients:
         if targetClient != broadcaster:
@@ -41,11 +61,27 @@ def broadcast(message, targetClients, broadcaster):
                 targetClient.close()
                 remove(targetClient)
 
-#remove: Helper function to remove a client from our client list
+
+#------------------------------------------------------
+# remove
+#
+# PURPOSE: Helper function to remove a client from our client list
+#
+# INPUT PARAMETERS: client to be removed
+#------------------------------------------------------
 def remove(thisClient):
     if thisClient in list_of_clients:
         list_of_clients.remove(thisClient)
 
+
+#------------------------------------------------------
+# welcome
+#
+# PURPOSE: Helper function to send a reply to a new client who just sent the server their nick name
+#
+# INPUT PARAMETERS: the nick name of the client
+#                   the client
+#------------------------------------------------------
 def welcome(newNickName, conn):
 
     if newNickName in client_nicknames:
@@ -62,7 +98,13 @@ def welcome(newNickName, conn):
 
     conn.send(json.dumps(reply).encode())
 
-
+#------------------------------------------------------
+# existing_rooms
+#
+# PURPOSE: To return the list of all existing chat rooms 
+#
+# INPUT PARAMETERS: the client requesting the list
+#------------------------------------------------------
 def existing_rooms(conn):
     
     reply = {
@@ -72,7 +114,16 @@ def existing_rooms(conn):
 
     conn.send(json.dumps(reply).encode())
 
+
+#------------------------------------------------------
+# room_info
+#
+# PURPOSE: To return the list & number of all users in a particular chat room
+#
+# INPUT PARAMETERS: the client requesting the list, the chat room 
+#------------------------------------------------------
 def room_info(conn, room):
+
     if room in chat_rooms:
         theList = chat_rooms[room]
         length = len(theList)
@@ -88,7 +139,15 @@ def room_info(conn, room):
 
     conn.send(json.dumps(reply).encode())
 
-
+#------------------------------------------------------
+# join_room
+#
+# PURPOSE: To add a client to any particular chat room
+#
+# INPUT PARAMETERS: the client to be added
+#                   chat room to be joined
+#                   nick name of the client 
+#------------------------------------------------------
 def join_room(conn, roomToJoin, nick):
 
     if roomToJoin in chat_rooms:
@@ -113,6 +172,16 @@ def join_room(conn, roomToJoin, nick):
 
     conn.send(json.dumps(reply).encode())
 
+
+#------------------------------------------------------
+# create_room
+#
+# PURPOSE: To create a new chat room
+#
+# INPUT PARAMETERS: the client that requested the new room
+#                   name of the chat room
+#                   nick name of the client 
+#------------------------------------------------------
 def create_room(conn, room_name, nick):
 
     if room_name in chat_rooms:
@@ -133,6 +202,15 @@ def create_room(conn, room_name, nick):
     conn.send(json.dumps(reply).encode())
     print("A new room %s has been created by the user %s"%room_name%nick)
 
+#------------------------------------------------------
+# send_message
+#
+# PURPOSE: To send message to a particular chat room
+#
+# INPUT PARAMETERS: the client that wants to send the message
+#                   name of the chat room
+#                   nick name of the client 
+#------------------------------------------------------
 def send_message(conn):
 
     reply={
@@ -142,7 +220,15 @@ def send_message(conn):
     conn.send(json.dumps(reply).encode())
     print("reply sent")
 
-
+#------------------------------------------------------
+# leave_room
+#
+# PURPOSE: To exit any chat room
+#
+# INPUT PARAMETERS: the client that wishes to leave the chat room
+#                   name of the chat room
+#                   nick name of the client 
+#------------------------------------------------------
 def leave_room(conn, roomToBeLeft, nick):
     
     if roomToBeLeft in chat_rooms:
@@ -160,6 +246,13 @@ def leave_room(conn, roomToBeLeft, nick):
 
     conn.send(json.dumps(reply).encode())
 
+#------------------------------------------------------
+# client_handler
+#
+# PURPOSE: Handles all the requests made by any client
+#
+# INPUT PARAMETERS: the client and their address
+#------------------------------------------------------
 def client_handler(client, address):
 
     while True:
@@ -198,12 +291,18 @@ def client_handler(client, address):
         except Exception as e:
             continue
 
-#infinite loop to listen for clients
+#
+#------------------------------------------------------
+#
+# infinite loop to listen for clients
+#
+# We start separate threads fro every client to keep the connection opn
+#------------------------------------------------------
 while True:
     client, address = server.accept()
-    #print("Connected to %s:%d" % (address[0], address[1])) 
+    
     list_of_clients.append(address)
 
-    handler = threading.Thread(target = client_handler, args=(client,address))
+    handler = threading.Thread(target = client_handler, args=(client,address)) #The threads are targeted to the message handler for the clients
     handler.start()
 

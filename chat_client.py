@@ -1,23 +1,31 @@
-#******************************
+# ----------------------------------------------------------------------------------------------
+# Name: Kunal Rajpal
+# Student number: 7885301
+# Course: COMP 4300, Computer Network
+# Instructor: Dr. Sara Rouhani 
+# Assignment: Assignment 1, chat_client.py
+# 
+# Remarks: Client for our client-server application
 #
-#
-#******************************
+#-------------------------------------------------------------------------------------------------
 
 #Imports
 import json
 import socket
 import threading
 
-
+#Constants
+# The host and port is chosen in accordance with the server
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8080
 
-welcome = "Welcome! To the awesome chat room\nLet's get Started\n************************************"
+welcome = "************************************\nWelcome! To the awesome chat room\nLet's get Started\n************************************"
 print (welcome)
+
 
 nickname = input("Please enter the nickname you wish to be identified with: ")
 
-#setting up TCp with our server
+#setting up TCP with our server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((SERVER_HOST, SERVER_PORT))
 
@@ -26,12 +34,21 @@ introduction  = {
     "nick-name":nickname
 }
 
-# as soon as the server is joined our client send out a new nick name
+# as soon as the server is joined our client sends out a nick name to the server as the welcome message
 client.send(json.dumps(introduction).encode())
 
+#------------------------------------------------------
+# handle_messages
+#
+# PURPOSE: To receive and process messages from the server
+#
+#------------------------------------------------------
 def handle_messages():
+
     while True:
+
         try:
+
             message = client.recv(1024)
 
             data_json = json.loads(message.decode('UTF-8'))
@@ -68,14 +85,26 @@ def handle_messages():
                 print(data_json["list_of_rooms"])
 
         except Exception as e:
+
             continue
 
 
 
 
+#------------------------------------------------------
+#   We start a new thread to receive messages from the 
+#   server and other clients
+#
+#------------------------------------------------------
 
 handler = threading.Thread(target = handle_messages)
 handler.start()
+
+#------------------------------------------------------
+#   This serves as our command menu and is displayed to the user 
+#   when they first join
+#
+#------------------------------------------------------
 
 cmd = """This is the list of commands you can utilize:\n
 [*]ROOMS: to get a list of all existing chat rooms
@@ -86,6 +115,12 @@ cmd = """This is the list of commands you can utilize:\n
 [*]SEND: Use this command followed by the name of the chatroom you wish to send your message in and your message"""
 
 print(cmd)
+
+#------------------------------------------------------
+#   Our infinite loop runs to take input from the user
+#   and send request to the server accordingly
+#
+#------------------------------------------------------
 
 while True:
     command = input("Enter Command: ")
