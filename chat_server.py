@@ -86,8 +86,9 @@ def welcome(newNickName, conn):
 
     if newNickName in client_nicknames:
         msg = "Error: Sorry the nickname already exists!"
+
     else:
-        msg = "*****************************************\n\nHello %s! Welcome to the awesome chat room, we hope you brought pizza\n\n*****************************************"%newNickName
+        msg = "\n*****************************************\n\nHello %s! Welcome to the awesome chat room, we hope you brought pizza\n\n*****************************************"%newNickName
         print("A new user joined the chat! Welcome: " + newNickName)
         client_nicknames.append(newNickName)
 
@@ -125,11 +126,14 @@ def existing_rooms(conn):
 def room_info(conn, room):
 
     if room in chat_rooms:
-        theList = chat_rooms[room]
-        length = len(theList)
-        msg = "The chat room %s has %d users"%(room, length)
+
+        theList = chat_rooms[room]  #list of all the users
+        length = len(theList)       #the number of users in the room
+        msg = "The chat room %s has %d users. "%(room, length)
+
     else:
-        msg = "The room does not exist"
+        theList = -1
+        msg = "The room name entered does not match any active existing rooms. Please try again"
 
     reply = {
         "reply-type":"room-info-reply",
@@ -151,22 +155,28 @@ def room_info(conn, room):
 def join_room(conn, roomToJoin, nick):
 
     if roomToJoin in chat_rooms:
-        #we join
-        theList = chat_rooms[roomToJoin]
-        length = len(theList)
-        if length <5:
+        #we attempt to join
+        theUserList = chat_rooms[roomToJoin]
+        length = len(theUserList)
+
+        if length >= 5:
+            msg = "Failed joining the room. The room has reached its maximum capacity"
+        elif length < 5:
             #we can join
-            theList.append(nick)
-            msg= "Room joining successful. Now you're in the chat room %s"%roomToJoin
-        else:
-            msg = "Room joining Failed: The room has reached its maximum capacity"
+            theUserList.append(nick)
+            msg= "Successfully joined the room %s"%roomToJoin
+        else: 
+            msg = "error"
+            print("error in join_room")
+    
     else:
-        msg= "Room joining Failed. The room does not exist, please try again" #TODO
+        # we can not join. Does not exist
+        msg = "The room name entered does not match any active existing rooms. Please try again"
 
     reply = {
         "reply-type":"join-room-reply",
         "list_of_rooms": chat_rooms,
-        "peers": theList,
+        "peers": theUserList,
         "output": msg
     }
 
@@ -192,15 +202,16 @@ def create_room(conn, room_name, nick):
         #add the name as the key and the list of nicknames as value in the dictionary
         chat_rooms[room_name] = []
         msg = "The room %s has been created. You can now look at the updated list of chat rooms using the appropriate command"%room_name
+        print("A new room %s has been created by the user %s"%room_name%nick)
 
     reply = {
         "reply-type":"create-room-reply",
         "list_of_rooms": chat_rooms,
         "output": msg
     }
-
     conn.send(json.dumps(reply).encode())
-    print("A new room %s has been created by the user %s"%room_name%nick)
+
+    
 
 #------------------------------------------------------
 # send_message
@@ -232,7 +243,9 @@ def send_message(conn):
 def leave_room(conn, roomToBeLeft, nick):
     
     if roomToBeLeft in chat_rooms:
+
         if nick in chat_rooms[roomToBeLeft]:
+            
             (chat_rooms[roomToBeLeft]).remove(nick)
             msg = "Leaving room successful"      
     else:
@@ -252,6 +265,8 @@ def leave_room(conn, roomToBeLeft, nick):
 # PURPOSE: Handles all the requests made by any client
 #
 # INPUT PARAMETERS: the client and their address
+#
+# This function only calls the helper functions to complete the tasks
 #------------------------------------------------------
 def client_handler(client, address):
 
@@ -261,7 +276,7 @@ def client_handler(client, address):
 
             data_json = json.loads(message.decode('UTF-8'))
 
-            if data_json["type"] == "welcome": 
+            if data_json["type"] == "welcome":
                 welcome(data_json["nick-name"], client)
 
             if data_json["type"] == "existing-rooms":

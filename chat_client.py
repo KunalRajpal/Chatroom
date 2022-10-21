@@ -19,11 +19,11 @@ import threading
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8080
 
-welcome = "************************************\nWelcome! To the awesome chat room\nLet's get Started\n************************************"
+welcome = "************************************\nWelcome! To the awesome chat room\nLet's get Started\n************************************\n"
 print (welcome)
 
 
-nickname = input("Please enter the nickname you wish to be identified with: ")
+nickname = input("Please enter the nickname you wish to be identified with: \n")
 
 #setting up TCP with our server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,21 +54,36 @@ def handle_messages():
             data_json = json.loads(message.decode('UTF-8'))
 
             if data_json["reply-type"] == "welcome-reply":
-
                 print(data_json["output"])
 
             if data_json["reply-type"] == "existing-rooms-reply":
 
-                print(data_json["list_of_rooms"])
+                listOfRooms = (list( (data_json["list_of_rooms"]).keys() ))
+
+                # We print the room names in the list one by one
+                print("All the active chat rooms are as follows:")
+
+                for x in range(len(listOfRooms)):
+                    print( "%d %s" %(x+1, listOfRooms[x]) )
+
 
             if data_json["reply-type"] == "room-info-reply":
 
-                print(data_json["output"])
-                print(data_json["peers"])
+                if (data_json["peers"]) == -1:
+                    print(data_json["output"])
+                elif (len(data_json["peers"])) == 0:
+                    print(data_json["output"])
+                else:
+                    print(data_json["output"])
+                    print("They are as follows:")
+                    users = data_json["peers"]
+                    for x in range(len(users)):
+                        print("%d %s"% (x+1,users[x]))
+
 
             if data_json["reply-type"] == "join-room-reply":
                 print(data_json["output"])
-                print(data_json["peers"])
+                #print(data_json["peers"])
 
             if data_json["reply-type"] == "create-room-reply":
 
@@ -82,7 +97,6 @@ def handle_messages():
             if data_json["reply-type"] == "leave-room-reply":
 
                 print(data_json["output"])
-                print(data_json["list_of_rooms"])
 
         except Exception as e:
 
@@ -107,12 +121,12 @@ handler.start()
 #------------------------------------------------------
 
 cmd = """This is the list of commands you can utilize:\n
-[*]ROOMS: to get a list of all existing chat rooms
-[*]ROOM-INFO: Use this command followed by the name of the room to get the number and list of all connected users for the room
-[*]JOIN-ROOM: Use this command followed by the name of the room you wish to join to join the room
+[*]ROOMS:       To get a list of all existing chat rooms
+[*]ROOM-INFO:   Use this command followed by the name of the room to get the number and list of all connected users for the room
+[*]JOIN-ROOM:   Use this command followed by the name of the room you wish to join to join the room
 [*]CREATE-ROOM: Use this command followed by the name of the room you wish to create
-[*]LEAVE-ROOM: Use this command followed by the name of the room you wish to leave
-[*]SEND: Use this command followed by the name of the chatroom you wish to send your message in and your message"""
+[*]LEAVE-ROOM:  Use this command followed by the name of the room you wish to leave
+[*]SEND:        Use this command followed by the name of the chatroom you wish to send your message in and your message\n"""
 
 print(cmd)
 
@@ -123,7 +137,7 @@ print(cmd)
 #------------------------------------------------------
 
 while True:
-    command = input("Enter Command: ")
+    command = input("Enter Command: \n")
     words = command.split(" ")
     n = len(words)
     if n <=0:
@@ -179,7 +193,8 @@ while True:
         elif words[0] == "SEND":
 
             request = {
-                "type": ""
+                "type": "message",
+                "room-name":words[1]
             }
 
             client.send(json.dumps(request).encode())
