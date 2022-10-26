@@ -13,6 +13,7 @@
 import json
 import socket
 import threading
+import sys
 
 #Constants
 # The host and port is chosen in accordance with the server
@@ -189,14 +190,27 @@ while True:
             }
 
             client.send(json.dumps(request).encode())
-
         elif words[0] == "SEND":
+            rm = words[1]
+            strng = ""
 
+            for x in range(len(words)):
+
+                if x == 0 or x == 1:
+                    continue
+                else:
+                    strng += words[x]
+                
             request = {
-                "type": "message",
-                "room-name":words[1]
+                "type": "send-message",
+                "room-name": rm,
+                "letter":strng
             }
 
             client.send(json.dumps(request).encode())
+        elif words[0] == "EXIT":
+            sys.exit("Exit successful")
+            print("Exit")
+
         else:
             print("Invalid command entered, please try again!")

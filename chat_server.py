@@ -57,9 +57,8 @@ def broadcast(message, targetClients, broadcaster):
         if targetClient != broadcaster:
             try:
                 targetClient.send(message)
-            except:
-                targetClient.close()
-                remove(targetClient)
+            except Exception as e:
+                continue
 
 
 #------------------------------------------------------
@@ -222,7 +221,13 @@ def create_room(conn, room_name, nick):
 #                   name of the chat room
 #                   nick name of the client 
 #------------------------------------------------------
-def send_message(conn):
+def send_message(conn, rm, msgString):
+    if rm in chat_rooms:
+        msg = "sending message bro"
+        userList = chat_rooms[rm]
+        broadcast( msgString, userList, conn)
+    else:
+        msg = "The room name could not be found"
 
     reply={
         "reply-type":"send-message-reply"
@@ -297,7 +302,7 @@ def client_handler(client, address):
 
             if data_json["type"] == "send-message":
                 #Send messages to chat-rooms
-                send_message(client)
+                send_message(data_json["letter", data_json["room-name"],client ])
             
             if data_json["type"] == "leave-room":
                 #Leave a chat-room
