@@ -34,3 +34,6 @@ chat room if the capacity of a room is full.)
 * Create chat rooms
 * Send messages to chat rooms
 * Leave a chat room
+
+For instructions on how to run the chat client and server take a look at the instructions pdf
+You can check out a detailed Testing Report by heading over to Testing Report pdf 
